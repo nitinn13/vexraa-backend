@@ -8,6 +8,9 @@ const stockRoutes = require("./routes/stockRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const stockController = require("./controllers/stockController");
 const { userRouter } = require("./routes/auth/auth");
+const quarterlyResultRoutes = require('./routes/stock/quaterlyresult');
+const profitlossRoutes = require('./routes/stock/profitloss');
+const balanceSheetRoutes = require('./routes/stock/balancesheet');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,10 +23,15 @@ app.use(
 
 app.use(express.json());
 
-app.get("/market-movers", stockController.getMarketMovers);
-app.use("/stock", stockRoutes);
-app.use("/admin", adminRoutes);
+// Routes
+// Note: /market-movers is placed globally as requested by frontend config rather than /stock/market-movers
+app.get('/market-movers', stockController.getMarketMovers);
+app.use('/stock', stockRoutes);
+app.use('/admin', adminRoutes);
 app.use("/auth", userRouter);
+app.use('/quaterlyresult', quarterlyResultRoutes);
+app.use('/profitloss', profitlossRoutes);
+app.use('/balancesheet', balanceSheetRoutes);
 
 async function main() {
   try {

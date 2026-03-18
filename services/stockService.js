@@ -255,10 +255,136 @@ const getStockIndices = async (symbol) => {
   return { totalIndices: 0, indices: [] };
 };
 
+
+const getQuarterlyResults = async (symbol) => {
+  // 1. Check Cache (using a unique key for quarterly data)
+  const cacheKey = `QUARTERLY_${symbol}`;
+  const cache = cacheManager.getCache();
+  
+  if (cache[cacheKey]) {
+    cacheManager.incrementCacheHits();
+    return cache[cacheKey];
+  }
+
+  // 2. Fetch the data from FMP API (period=quarter&limit=5 as per your spec)
+  const rawData = await fmpFetch('income-statement', `symbol=${symbol}&period=quarter&limit=5`);
+
+  if (!rawData || !Array.isArray(rawData)) {
+    throw new Error("Could not fetch quarterly results for " + symbol);
+  }
+
+  cacheManager.incrementApiCalls(1);
+
+  // 3. Map the data based on TEAM C's Data Mapping Document
+  const mappedResults = rawData.map(quarter => {
+    return {
+      date: quarter.date,
+      period: `${quarter.period} ${quarter.date.substring(0, 4)}`, // e.g., "Q3 2023"
+      netSales: quarter.revenue || 0,
+      totalExpenditure: (quarter.totalOperatingExpenses || 0) + (quarter.costOfRevenue || 0),
+      operatingProfit: quarter.operatingIncome || 0,
+      otherIncome: quarter.totalOtherIncomeExpensesNet || 0,
+      interest: quarter.interestExpense || 0,
+      depreciation: quarter.depreciationAndAmortization || 0,
+      exceptionalItems: 0 // Defaulting to 0 as per your spec notes
+    };
+  });
+
+  // 4. Save to cache and return
+  cacheManager.setCache(cacheKey, mappedResults);
+  return mappedResults;
+};
+
+
+
+const getAnnualProfitLoss = async (symbol) => {
+  // 1. Check Cache
+  const cacheKey = `ANNUAL_PL_${symbol}`;
+  const cache = cacheManager.getCache();
+  
+  if (cache[cacheKey]) {
+    cacheManager.incrementCacheHits();
+    return cache[cacheKey];
+  }
+
+  // 2. Fetch data from FMP API (Annual)
+  const rawData = await fmpFetch('income-statement', `symbol=${symbol}&period=annual&limit=5`);
+
+  if (!rawData || !Array.isArray(rawData)) {
+    throw new Error("Could not fetch annual profit and loss data for " + symbol);
+  }
+
+  cacheManager.incrementApiCalls(1);
+
+  // 3. Map the data based on TEAM C's Data Mapping Document
+  const mappedResults = rawData.map(yearData => {
+    return {
+      date: yearData.date,
+      year: yearData.calendarYear || yearData.date.substring(0, 4), // Extract year safely
+      netSales: yearData.revenue || 0,
+      totalExpenditure: (yearData.totalOperatingExpenses || 0) + (yearData.costOfRevenue || 0),
+      operatingProfit: yearData.operatingIncome || 0,
+      otherIncome: yearData.totalOtherIncomeExpensesNet || 0,
+      interest: yearData.interestExpense || 0,
+      depreciation: yearData.depreciationAndAmortization || 0,
+      exceptionalItems: 0, 
+      profitBeforeTax: yearData.incomeBeforeTax || 0,
+      tax: yearData.incomeTaxExpense || 0,
+      netProfit: yearData.netIncome || 0,
+      adjustedEps: yearData.eps || 0
+    };
+  });
+
+  // 4. Save to cache and return
+  cacheManager.setCache(cacheKey, mappedResults);
+  return mappedResults;
+};
+
+
+const getAnnualBalanceSheet = async (symbol) => {
+  // 1. Check Cache
+  const cacheKey = `ANNUAL_BS_${symbol}`;
+  const cache = cacheManager.getCache();
+  
+  if (cache[cacheKey]) {
+    cacheManager.incrementCacheHits();
+    return cache[cacheKey];
+  }
+
+  // 2. Fetch data from FMP API (Annual) 
+  const rawData = await fmpFetch('balance-sheet-statement', `symbol=${symbol}&period=annual&limit=5`);
+
+  if (!rawData || !Array.isArray(rawData)) {
+    throw new Error("Could not fetch annual balance sheet data for " + symbol);
+  }
+
+  cacheManager.incrementApiCalls(1);
+
+  // 3. Map the data based on TEAM C's Data Mapping Document [cite: 74, 76, 77, 78]
+  const mappedResults = rawData.map(yearData => {
+    return {
+      date: yearData.date,
+      year: yearData.calendarYear || yearData.date.substring(0, 4),
+      shareCapital: yearData.commonStock || 0, // [cite: 76]
+      totalReserves: (yearData.retainedEarnings || 0) + (yearData.accumulatedOtherComprehensiveIncomeLoss || 0), // [cite: 77]
+      borrowings: yearData.totalDebt || (yearData.shortTermDebt || 0) + (yearData.longTermDebt || 0) // [cite: 78]
+    };
+  });
+
+  // 4. Save to cache and return
+  cacheManager.setCache(cacheKey, mappedResults);
+  return mappedResults;
+};
+
+
+
 module.exports = {
   getStockProfile,
   getMarketMovers,
   getStockHistory,
   getStockBrands,
-  getStockIndices
+  getStockIndices,
+  getQuarterlyResults,
+  getAnnualProfitLoss,
+  getAnnualBalanceSheet
 };
