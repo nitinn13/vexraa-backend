@@ -1,0 +1,23 @@
+const stockService = require('../../services/stockService');
+
+const getCorporateActions = async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const data = await stockService.getCorporateActions(symbol);
+    
+    res.status(200).json({ 
+      success: true, 
+      data: data 
+    });
+  } catch (error) {
+    console.error(`Error fetching corporate actions for ${req.params.symbol}:`, error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Internal Server Error' 
+    });
+  }
+};
+
+module.exports = {
+  getCorporateActions
+};

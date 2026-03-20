@@ -11,6 +11,14 @@ const { userRouter } = require("./routes/auth/auth");
 const quarterlyResultRoutes = require('./routes/stock/quaterlyresult');
 const profitlossRoutes = require('./routes/stock/profitloss');
 const balanceSheetRoutes = require('./routes/stock/balancesheet');
+const shareholdingRoutes = require('./routes/stock/shareholding');
+const corporateactionsRoutes = require('./routes/stock/corporateactions');
+const peercomparisonRoutes = require('./routes/stock/peercomparison');
+const newsRoutes = require('./routes/stock/news');
+const insightsRoutes = require('./routes/stock/insights');
+const superinvestorRoutes = require('./routes/stock/superinvestor');
+const reportsAndFilingsRoutes = require('./routes/stock/reportsandfilings');
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +40,16 @@ app.use("/auth", userRouter);
 app.use('/quaterlyresult', quarterlyResultRoutes);
 app.use('/profitloss', profitlossRoutes);
 app.use('/balancesheet', balanceSheetRoutes);
+app.use('/shareholding', shareholdingRoutes);
+app.use('/corporateactions', corporateactionsRoutes);
+app.use('/peercomparison', peercomparisonRoutes);
+app.use('/news', newsRoutes);
+app.use('/insights', insightsRoutes);
+app.use('/superinvestor', superinvestorRoutes);
+app.use('/reportsandfilings', reportsAndFilingsRoutes);
+
+
+
 
 async function main() {
   try {
