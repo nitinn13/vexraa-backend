@@ -39,16 +39,26 @@ const getHistory = async (req, res) => {
   }
 };
 
-const getBrands = (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  const brands = stockService.getStockBrands(symbol);
-  res.json({ symbol, brands });
+const getBrands = async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const brands = await stockService.getStockBrands(symbol);
+    res.json({ symbol, brands });
+  } catch (err) {
+    console.error("Backend Error (brands):", err);
+    res.status(500).json({ error: "Server error generating brands" });
+  }
 };
 
-const getIndices = (req, res) => {
-  const symbol = req.params.symbol.toUpperCase();
-  const indices = stockService.getStockIndices(symbol);
-  res.json({ symbol, ...indices });
+const getIndices = async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const indices = await stockService.getStockIndices(symbol);
+    res.json({ symbol, ...indices });
+  } catch (err) {
+    console.error("Backend Error (indices):", err);
+    res.status(500).json({ error: "Server error generating indices" });
+  }
 };
 
 module.exports = {
