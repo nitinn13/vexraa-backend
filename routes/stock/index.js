@@ -11,7 +11,9 @@ const superinvestorController = require('../../controllers/stocks/superinvestor'
 const peercomparisonController = require('../../controllers/stocks/peercomparison');
 const insightsController = require('../../controllers/stocks/insights');
 const newsController = require('../../controllers/stocks/news');
+const { searchStocks } = require('../../controllers/stocks/searchController');
 
+router.get('/search', searchStocks)
 
 router.get('/:symbol/quarterly', quarterlyController.getQuarterlyResults);
 
