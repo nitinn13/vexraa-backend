@@ -12,8 +12,13 @@ const peercomparisonController = require('../../controllers/stocks/peercompariso
 const insightsController = require('../../controllers/stocks/insights');
 const newsController = require('../../controllers/stocks/news');
 const { searchStocks } = require('../../controllers/stocks/searchController');
+const { getCompanyProfile } = require('../../controllers/stocks/profile');
+const { getKeyMetrics } = require('../../controllers/stocks/metrics');
 
 router.get('/search', searchStocks)
+
+router.get('/:symbol/profile', getCompanyProfile);
+router.get('/:symbol/metrics', getKeyMetrics);
 
 router.get('/:symbol/quarterly', quarterlyController.getQuarterlyResults);
 
