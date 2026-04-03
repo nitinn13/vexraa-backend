@@ -10,7 +10,6 @@ const adminRoutes = require("./routes/adminRoutes");
 const stockController = require("./controllers/stockController");
 const { userRouter } = require("./routes/auth/auth");
 const { initializeStockSearch } = require("./controllers/stocks/searchController");
-const ratioChartRoutes = require("./routes/stock/ratioChartRoutes");
 
 
 const app = express();
@@ -30,8 +29,6 @@ app.get("/market-movers", stockController.getMarketMovers);
 app.use("/api/stocks", stockRoutes);   
 app.use("/admin", adminRoutes);
 app.use("/auth", userRouter);
-app.use('/api', ratioChartRoutes);
-app.use('/api', ratioChartRoutes);
 
 
 async function main() {
