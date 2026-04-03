@@ -6,8 +6,6 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 
 const stockRoutes = require("./routes/stock"); 
-const adminRoutes = require("./routes/adminRoutes");
-const stockController = require("./controllers/stockController");
 const { userRouter } = require("./routes/auth/auth");
 const { initializeStockSearch } = require("./controllers/stocks/searchController");
 
@@ -22,12 +20,7 @@ app.use(
 );
 
 app.use(express.json());
-
-
-app.get("/market-movers", stockController.getMarketMovers);
-
 app.use("/api/stocks", stockRoutes);   
-app.use("/admin", adminRoutes);
 app.use("/auth", userRouter);
 
 
