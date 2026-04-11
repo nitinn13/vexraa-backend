@@ -1,4 +1,3 @@
-// controllers/stocks/peChart.js
 const getPEChart = async (req, res) => {
   try {
     const symbol = req.params.symbol?.toUpperCase();

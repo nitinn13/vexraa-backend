@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { userModel } = require("../../db");
+const { authMiddleware } = require("../../middleware");
 
 const userRouter = express.Router();
 
@@ -88,6 +89,112 @@ userRouter.post("/login", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+// 🔥 Get Profile
+userRouter.get("/profile", authMiddleware, async (req, res) => {
+  try {
+    // req.user is already populated and password-excluded by authMiddleware
+    const user = req.user;
+
+    // Compute portfolio summary
+    const totalInvestment = user.holdings.reduce(
+      (acc, h) => acc + h.quantity * h.buyPrice,
+      0
+    );
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+      holdings: user.holdings,
+      summary: {
+        totalHoldings: user.holdings.length,
+        totalInvestment: Number(totalInvestment.toFixed(2)), // Clean decimal formatting
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// 🔥 Add or Update Holding
+userRouter.post("/add-holding", authMiddleware, async (req, res) => {
+  try {
+    let {
+      symbol,
+      stockName,
+      quantity,
+      buyPrice,
+      purchaseDate,
+      notes,
+    } = req.body;
+
+    // 1. Validation
+    if (!symbol || !stockName || !quantity || !buyPrice || !purchaseDate) {
+      return res.status(400).json({
+        message: "All required fields must be provided",
+      });
+    }
+
+    if (quantity <= 0 || buyPrice <= 0) {
+      return res.status(400).json({
+        message: "Quantity and price must be greater than 0",
+      });
+    }
+
+    symbol = symbol.toUpperCase();
+    const user = req.user; // Use user from middleware
+
+    // 2. Check if holding already exists
+    const existingHolding = user.holdings.find(
+      (h) => h.symbol === symbol
+    );
+
+    if (existingHolding) {
+      // 3. Weighted Average Logic
+      const oldQty = existingHolding.quantity;
+      const oldPrice = existingHolding.buyPrice;
+
+      const newQtyTotal = oldQty + Number(quantity);
+      const newAvgPrice = ((oldQty * oldPrice) + (quantity * buyPrice)) / newQtyTotal;
+
+      existingHolding.quantity = newQtyTotal;
+      existingHolding.buyPrice = Number(newAvgPrice.toFixed(2));
+      existingHolding.purchaseDate = purchaseDate; // Updates to latest purchase date
+      if (notes) existingHolding.notes = notes;
+    } else {
+      // 4. Add new holding
+      user.holdings.push({
+        symbol,
+        stockName,
+        quantity: Number(quantity),
+        buyPrice: Number(buyPrice),
+        purchaseDate,
+        notes: notes || "",
+      });
+    }
+
+    // 5. Save the updated user document
+    await user.save();
+
+    res.status(201).json({
+      success: true,
+      message: existingHolding
+        ? "Holding updated (merged via weighted average)"
+        : "Holding added successfully",
+      holdings: user.holdings,
+    });
+
+  } catch (error) {
+    console.error("Add Holding Error:", error.message);
+    res.status(500).json({
+      message: "Failed to add/update holding",
+    });
   }
 });
 
