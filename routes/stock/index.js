@@ -12,6 +12,7 @@ const insightsController = require('../../controllers/stocks/insights');
 const newsController = require('../../controllers/stocks/news');
 const { getBalanceSheet } = require('../../controllers/stocks/balancesheet');
 const { searchStocks } = require('../../controllers/stocks/searchController');
+const { getScreenerData } = require('../../controllers/stocks/screener');
 
 const { getCompanyProfile } = require('../../controllers/stocks/profile');
 const { getKeyMetrics } = require('../../controllers/stocks/metrics');
@@ -24,6 +25,7 @@ const { getDonutChart } = require('../../controllers/stocks/donutChart');
 const { getRatios } = require('../../controllers/stocks/ratios');
 const { getPriceSummary } = require('../../controllers/stocks/priceSummary');
 const { getSecProfile } = require('../../controllers/stocks/secProfile');
+const { getDCFValuation } = require('../../controllers/stocks/dcf');
 
 // ROUTES
 router.get('/search', searchStocks); //done
@@ -32,14 +34,16 @@ router.get('/:symbol/profile', getCompanyProfile); //done
 router.get('/:symbol/metrics', getKeyMetrics); //done
 router.get("/:symbol/price-summary", getPriceSummary); //done
 router.get("/:symbol/sec-profile", getSecProfile);
+router.get("/screener", getScreenerData);
+router.get("/:symbol/dcf", getDCFValuation);
 
 router.get('/:symbol/quarterly', quarterlyController.getQuarterlyResults); // done
-router.get('/:symbol/shareholding', shareholdingController.getShareholdingPattern); // not working and not on fmp
+router.get('/:symbol/shareholding', shareholdingController.getShareholdingPattern); // aarush gave but empty
 router.get('/:symbol/balancesheet', getBalanceSheet); //done
 router.get('/:symbol/profit-loss', profitlossController.getAnnualProfitLoss); //done
 router.get('/:symbol/corporate-actions', corporateactionsController.getCorporateActions); // not working and diff on fmp
 router.get('/:symbol/reports', reportsController.getReportsAndFilings); //done
-router.get('/:symbol/superinvestors', superinvestorController.getSuperInvestors);// not working and not on fmp
+router.get('/:symbol/superinvestors', superinvestorController.getSuperInvestors);// aarush gave but empty
 router.get('/:symbol/peers', peercomparisonController.getPeerComparison); // done
 router.get('/:symbol/insights', insightsController.getInsights); //done
 router.get('/:symbol/news', newsController.getLatestNews); //done
