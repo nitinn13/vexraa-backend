@@ -42,7 +42,6 @@ const getQuarterlyResults = async (symbol) => {
 };
 
 
-
 const getAnnualProfitLoss = async (symbol) => {
   // 1. Check Cache
   const cacheKey = `ANNUAL_PL_${symbol}`;
@@ -86,68 +85,6 @@ const getAnnualProfitLoss = async (symbol) => {
   return mappedResults;
 };
 
-
-const getCorporateActions = async (symbol) => {
-  const cacheKey = `CORPORATE_ACTIONS_${symbol}`;
-  const cache = cacheManager.getCache();
-  
-  if (cache[cacheKey]) {
-    cacheManager.incrementCacheHits();
-    return cache[cacheKey];
-  }
-
-  // 1. Fetch both Splits and Dividends concurrently
-  const [splitsData, dividendsData] = await Promise.all([
-    fmpFetch(`historical-price-full/stock_split/${symbol}`, ''),
-    fmpFetch(`historical-price-full/stock_dividend/${symbol}`, '')
-  ]);
-
-  // 🐛 DEBUG LOG: Let's see exactly what the stable API is returning
-  console.log(`Raw Splits Data for ${symbol}:`, JSON.stringify(splitsData).substring(0, 150));
-  console.log(`Raw Dividends Data for ${symbol}:`, JSON.stringify(dividendsData).substring(0, 150));
-
-  cacheManager.incrementApiCalls(2);
-
-  let actions = [];
-
-  // SAFELY EXTRACT ARRAYS (Handles both array directly OR nested in .historical)
-  const splitsArray = Array.isArray(splitsData) ? splitsData : (splitsData?.historical || []);
-  const dividendsArray = Array.isArray(dividendsData) ? dividendsData : (dividendsData?.historical || []);
-
-  // 2. Process and map Splits
-  if (splitsArray.length > 0) {
-    const mappedSplits = splitsArray.map(item => ({
-      date: item.date, 
-      recordDate: item.recordDate || 'N/A',
-      type: 'Split',
-      ratio: item.numerator && item.denominator ? `${item.numerator}:${item.denominator}` : 'N/A', 
-      amount: null
-    }));
-    actions = [...actions, ...mappedSplits];
-  }
-
-  // 3. Process and map Dividends
-  if (dividendsArray.length > 0) {
-    const mappedDividends = dividendsArray.map(item => ({
-      date: item.date, 
-      recordDate: item.recordDate || 'N/A',
-      type: 'Dividend',
-      ratio: null,
-      amount: item.adjDividend || item.dividend || 0 
-    }));
-    actions = [...actions, ...mappedDividends];
-  }
-
-  // 4. Sort the combined list by date (newest first)
-  actions.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // 5. Slice to return only the 15 most recent corporate actions
-  const recentActions = actions.slice(0, 15);
-
-  // 6. Save to cache and return
-  cacheManager.setCache(cacheKey, recentActions);
-  return recentActions;
-};
 
 const getPeerComparison = async (symbol) => {
   const cacheKey = `PEERS_${symbol}`;
@@ -232,11 +169,6 @@ const getPeerComparison = async (symbol) => {
 };
 
 
-
-
-
-
-
 // Quick helper function to format "2h ago", "3d ago", etc.
 const timeSince = (dateString) => {
   const date = new Date(dateString);
@@ -254,6 +186,7 @@ const timeSince = (dateString) => {
   if (interval > 1) return Math.floor(interval) + "m ago";
   return Math.floor(seconds) + "s ago";
 };
+
 
 const getLatestNews = async (symbol) => {
   const cacheKey = `NEWS_${symbol}`;
@@ -289,10 +222,6 @@ const rawData = await fmpFetch('news/stock', `symbols=${symbol}&limit=5`);
   cacheManager.setCache(cacheKey, mappedNews);
   return mappedNews;
 };
-
-
-
-
 
 
 const getInsights = async (symbol) => {
@@ -384,55 +313,6 @@ const getInsights = async (symbol) => {
 };
 
 
-const getSuperInvestors = async (symbol) => {
-  const cacheKey = `INVESTORS_${symbol}`;
-  const cache = cacheManager.getCache();
-
-  if (cache[cacheKey]) {
-    cacheManager.incrementCacheHits();
-    return cache[cacheKey];
-  }
-
-  try {
-    const rawData = await fmpFetch(
-      'institutional-ownership/symbol-ownership', 
-      `symbol=${symbol}&limit=50`, 
-      'stable'
-    );
-
-    console.log(`Raw Super Investors Data for ${symbol}:`, JSON.stringify(rawData).substring(0, 150));
-
-    if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
-      return [];
-    }
-
-    cacheManager.incrementApiCalls(1);
-
-    const mappedInvestors = rawData.slice(0, 10).map(investor => {
-      const holdingValueBn = investor.marketValue 
-        ? `$${(investor.marketValue / 1e9).toFixed(2)} Bn` 
-        : investor.value 
-          ? `$${(investor.value / 1e9).toFixed(2)} Bn`
-          : "Value Not Disclosed";
-
-      return {
-        investorName: investor.investorName || investor.investor || investor.name || "Unknown Institution",
-        sharesHeld: investor.sharesNumber || investor.shares || 0,
-        holdingValueBn,
-        portfolioPercentage: investor.ownership || investor.weight || investor.portfolioPercentage || 0,
-        dateReported: investor.date || investor.reportDate || investor.filingDate || "N/A"
-      };
-    });
-
-    cacheManager.setCache(cacheKey, mappedInvestors);
-    return mappedInvestors;
-
-  } catch (error) {
-    console.error("Failed to fetch real investor data:", error.message);
-    return [];
-  }
-};
-
 const getReportsAndFilings = async (symbol) => {
   const cacheKey = `REPORTS_${symbol}`;
   const cache = cacheManager.getCache();
@@ -513,10 +393,8 @@ const getReportsAndFilings = async (symbol) => {
 module.exports = {
   getQuarterlyResults,
   getAnnualProfitLoss,
-  getCorporateActions,
   getPeerComparison,
   getLatestNews,
   getInsights,
-  getSuperInvestors,
   getReportsAndFilings
 };

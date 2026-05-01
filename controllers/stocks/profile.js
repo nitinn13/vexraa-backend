@@ -19,6 +19,7 @@ async function getCompanyProfile(req, res) {
     const response = {
       basic: {
         symbol: p.symbol,
+        cik : p.cik,
         name: p.companyName,
         price: p.price,
         change: p.change,
