@@ -49,7 +49,7 @@ router.get("/:symbol/splits", getStockSplits); //done
 router.get("/:symbol/dividends", getDividends); //done
 router.get("/:symbol/cash-flow", getCashFlow); //done
 router.get("/:symbol/price-chart-light", getPriceChartLight); //done
-router.get("/:symbol/pepb-ratio", pePbRatio ); //done
+router.get("/:symbol/pepb-ratio", pePbRatio );
 router.get("/:symbol/growth", getGrowthRatios);
 
 
